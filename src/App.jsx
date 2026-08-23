@@ -1,6 +1,8 @@
 import React, { Suspense, lazy } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
+// Toast styles must be global - without this, toasts render but stay invisible
+import 'react-toastify/dist/ReactToastify.css'
 import Footer from './components/pages/Footer'
 import Navbar from './components/Navbar'
 
@@ -41,7 +43,16 @@ const App = () => {
   return (
     <div>
       {!isRiderRoute && <Navbar />}
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="light"
+      />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path='/signup' element={<Signup />} />

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { 
   Package, 
@@ -20,15 +19,12 @@ import {
   Mail,
   CreditCard,
   ArrowLeft,
-  User,
-  Copy,
-  ExternalLink
+  User
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { backendUrl } from '../config'
 
 const Order = () => {
-  const {trackingNumber }= useParams();
   const [orderDetails, setOrderDetails] = useState(null);
   const navigate = useNavigate()
 
@@ -41,15 +37,8 @@ const Order = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
-  // per-order loading when resolving tracking by orderNumber
-  const [trackingLoadingMap, setTrackingLoadingMap] = useState({})
-
   // id of the order whose cancel button is in progress
   const [cancellingId, setCancellingId] = useState(null)
-
-  // Add this state at the top with other state declarations
-  const [expandedTrackingMap, setExpandedTrackingMap] = useState({})
-  const [trackingDetails, setTrackingDetails] = useState({})
 
   // Authentication headers
   const getAuthHeaders = () => {
@@ -198,7 +187,6 @@ const Order = () => {
           paymentMethod: order.paymentMethod || {},
           paymentInfo: order.paymentInfo || {},
           paymentStatus: order.paymentStatus || 'pending',
-          trackingNumber: order.trackingNumber || null,
           subtotal: order.subtotal || 0,
           shippingCost: order.shipping || order.shippingCost || 0,
           tax: order.tax || 0,
@@ -295,12 +283,6 @@ const Order = () => {
     }
   }
 
-  // Copy to clipboard function
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text)
-    alert('Copied to clipboard!')
-  }
-
   // Format address
   const formatAddress = (shippingInfo) => {
     if (!shippingInfo) return 'No address provided'
@@ -323,87 +305,6 @@ const Order = () => {
     ].filter(Boolean)
     
     return parts.length > 0 ? parts.join(', ') : 'Address not available'
-  }
-
-  // Try to find tracking number by orderNumber (updates state and navigates if found)
-  const findTrackingByOrderNumber = async (order) => {
-    if (!order) return
-    const orderNumber = order.orderNumber || order._id
-    if (!orderNumber) {
-      alert('Order number not available')
-      return
-    }
-
-    const key = order._id || orderNumber
-    setTrackingLoadingMap(prev => ({ ...prev, [key]: true }))
-
-    try {
-      const attempts = [
-        { url: `${backendUrl}/api/order-tracking`, params: { orderNumber } },
-        { url: `${backendUrl}/api/order-tracking`, params: { orderId: orderNumber } },
-        { url: `${backendUrl}/api/order-tracking/by-order/${encodeURIComponent(orderNumber)}`, params: null },
-        { url: `${backendUrl}/api/orders/${encodeURIComponent(orderNumber)}/tracking`, params: null }
-      ]
-
-      let trackingNumber = null
-      let trackingInfo = null
-
-      for (const ep of attempts) {
-        try {
-          const resp = await axios.get(ep.url, { params: ep.params, headers: getAuthHeaders() })
-          const data = resp.data?.data || resp.data || null
-          if (!data) continue
-
-          if (Array.isArray(data)) {
-            const found = data.find(d => (d.orderNumber && d.orderNumber === orderNumber) || (d.orderId && d.orderId === orderNumber))
-            if (found) {
-              trackingNumber = found.trackingNumber || found.tracking || found.tracking_id || null
-              trackingInfo = found
-            }
-          } else {
-            trackingNumber = data.trackingNumber || data.tracking || data.tracking_id || null
-            trackingInfo = data
-          }
-
-          if (trackingNumber) break
-        } catch (err) {
-          // ignore and try next
-          if (err.response?.status === 401) {
-            alert('Authentication required. Please login again.')
-            navigate('/login', { state: { returnUrl: window.location.pathname } })
-            return
-          }
-        }
-      }
-
-      if (trackingNumber) {
-        // Update orders with tracking number
-        setOrders(prev => prev.map(o => 
-          (o._id === order._id || o.orderNumber === orderNumber) 
-            ? { ...o, trackingNumber, trackingStatus: trackingInfo?.status, trackingHistory: trackingInfo?.history } 
-            : o
-        ))
-        
-        // Store tracking details
-        setTrackingDetails(prev => ({
-          ...prev,
-          [key]: trackingInfo
-        }))
-        
-        // Expand the tracking details section
-        setExpandedTrackingMap(prev => ({
-          ...prev,
-          [key]: true
-        }))
-      } else {
-        alert('No tracking information found for this order')
-      }
-    } catch (err) {
-      console.error('findTrackingByOrderNumber error:', err)
-      alert('Unable to lookup tracking. Please try again.')
-    } finally {
-      setTrackingLoadingMap(prev => ({ ...prev, [key]: false }))
-    }
   }
 
   if (loading) {
@@ -530,8 +431,7 @@ const Order = () => {
                         </span>
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-1 gap-4 mb-4">
                       <div>
                         <h4 className="text-sm font-medium text-gray-500 mb-1">Shipping Address</h4>
                         <p className="text-sm text-gray-900">
@@ -543,125 +443,6 @@ const Order = () => {
                             {order.shippingInfo?.fullName || order.shippingAddress?.fullName}
                           </p>
                         )}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-500 mb-1">Tracking Number</h4>
-                        <div className="flex flex-col space-y-2">
-                          <div className="flex items-center space-x-3">
-                            <div>
-                              <p className={`text-sm ${order.trackingNumber ? 'text-gray-900' : 'text-gray-500'}`}>
-                                {order.trackingNumber || `Not available (Order: ${order.orderNumber || order._id})`}
-                              </p>
-                              {trackingLoadingMap[order._id || order.orderNumber] && (
-                                <p className="text-xs text-gray-400">Looking up tracking…</p>
-                              )}
-                            </div>
-
-                            {order.trackingNumber ? (
-                              <>
-                                <button
-                                  onClick={() => copyToClipboard(order.trackingNumber)}
-                                  className="text-[#E72744] hover:text-[#C81E38]"
-                                  title="Copy tracking number"
-                                >
-                                  <Copy className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => setExpandedTrackingMap(prev => ({
-                                    ...prev,
-                                    [order._id]: !prev[order._id]
-                                  }))}
-                                  className="ml-1 px-3 py-1 text-sm bg-[#E72744] text-white rounded-md hover:bg-[#C81E38] transition-colors"
-                                >
-                                  {expandedTrackingMap[order._id] ? 'Hide Details' : 'View Details'}
-                                </button>
-                                
-                              </>
-                            ) : (
-                              <button
-                                onClick={() => findTrackingByOrderNumber(order)}
-                                className="ml-1 px-3 py-1 text-sm bg-[#E72744] text-white rounded-md hover:bg-[#C81E38] transition-colors"
-                                title="Find tracking for this order"
-                              >
-                                {trackingLoadingMap[order._id || order.orderNumber] ? 'Checking…' : 'Find Tracking'}
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Expanded Tracking Details */}
-                          {expandedTrackingMap[order._id] && order.trackingNumber && (
-                            <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
-                              <div className="space-y-3">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <p className="text-sm font-medium">Status</p>
-                                    <p className={`text-sm ${
-                                      order.trackingStatus ? 'text-gray-900' : 'text-gray-500'
-                                    }`}>
-                                      {order.trackingStatus || 'Pending'}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-medium">Last Updated</p>
-                                    <p className="text-sm text-gray-600">
-                                      {trackingDetails[order._id]?.lastUpdated 
-                                        ? new Date(trackingDetails[order._id].lastUpdated).toLocaleString() 
-                                        : 'N/A'}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Tracking History */}
-                                {order.trackingHistory && order.trackingHistory.length > 0 && (
-                                  <div className="mt-4">
-                                    <p className="text-sm font-medium mb-2">Tracking History</p>
-                                    <div className="space-y-2">
-                                      {order.trackingHistory.map((event, idx) => (
-                                        <div key={idx} className="text-sm bg-white p-2 rounded border">
-                                          <p className="font-medium">{event.status}</p>
-                                          {event.location && (
-                                            <p className="text-gray-600">{event.location}</p>
-                                          )}
-                                          <p className="text-xs text-gray-500">
-                                            {new Date(event.timestamp || event.date).toLocaleString()}
-                                          </p>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Full Details Link */}
-                                <div className="flex items-center justify-between pt-3 mt-3 border-t">
-                                  <p className="text-xs text-gray-500">
-                                    Tracking ID: {order.trackingNumber}
-                                  </p>
-                                  <Link
-                                    to="/tracking-order"
-                                    state={{ 
-                                      trackingNumber: order.trackingNumber,
-                                      orderNumber: order.orderNumber,
-                                      orderDetails: {
-                                        orderDate: order.createdAt,
-                                        total: order.total,
-                                        status: order.status,
-                                        shippingInfo: order.shippingInfo,
-                                        items: order.items || order.products,
-                                        orderNumber: order.orderNumber,
-                                        trackingHistory: order.trackingHistory || [],
-                                        trackingStatus: order.trackingStatus
-                                      }
-                                    }}
-                                    className="inline-flex items-center px-3 py-1.5 bg-[#E72744] text-white text-sm rounded hover:bg-[#C81E38] transition-colors"
-                                  >
-                                    <ExternalLink className="w-4 h-4 mr-1.5" />
-                                    Full Tracking Details
-                                  </Link>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
                       </div>
                     </div>
 

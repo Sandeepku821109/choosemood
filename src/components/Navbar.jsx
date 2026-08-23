@@ -203,7 +203,7 @@ const Navbar = () => {
                   <span className="font-serif text-gold-300 font-bold text-base sm:text-xl tracking-tight">CM</span>
                 </div>
                 <span className="font-serif text-lg sm:text-2xl font-semibold text-ink-900 tracking-wide">
-                  CHOOSE<span className="italic text-gold-600">MOOD</span>
+                  CHOOSE<span className=" text-gold-600">MOOD</span>
                 </span>
               </NavLink>
             </div>
