@@ -2,6 +2,7 @@ import axios from 'axios'
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { backendUrl } from '../../config'
+import { clearAuthStorage } from '../../utils/api'
 // import { toast } from 'react-toastify'
 
 const Login = () => {
@@ -256,14 +257,9 @@ const Login = () => {
 
     const handleLogout = () => {
         console.log('🚪 Logging out user')
-        localStorage.removeItem('authToken')
-        localStorage.removeItem('token')
-        localStorage.removeItem('userEmail')
-        localStorage.removeItem('userId')
-        // remove helper flags as well
-        localStorage.removeItem('hasAuthToken')
-        localStorage.removeItem('hasToken')
-        localStorage.removeItem('isLoggedIn')
+        // Clear the httpOnly session cookie on the backend (fire-and-forget)
+        axios.post(`${backendUrl}/api/users/logout`).catch(() => {})
+        clearAuthStorage()
         localStorage.removeItem('hasRazorpayId')
         setIsAuthenticated(false)
         setUserData(null)

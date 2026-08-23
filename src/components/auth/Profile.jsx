@@ -3,6 +3,7 @@ import axios from 'axios'
 import { backendUrl } from '../../config'
 import { useNavigate } from 'react-router-dom'
 import { processImageUrl, handleImageError } from '../../utils/imageUtils'
+import { clearAuthStorage } from '../../utils/api'
 
 const Profile = () => {
     const [formData, setFormData] = useState({
@@ -216,14 +217,9 @@ const Profile = () => {
     }
 
     const handleLogout = () => {
-        localStorage.removeItem('authToken')
-        localStorage.removeItem('token')
-        localStorage.removeItem('userEmail')
-        localStorage.removeItem('userName')
-        // remove helper flags as well
-        localStorage.removeItem('hasAuthToken')
-        localStorage.removeItem('hasToken')
-        localStorage.removeItem('isLoggedIn')
+        // Clear the httpOnly session cookie on the backend (fire-and-forget)
+        axios.post(`${backendUrl}/api/users/logout`).catch(() => {})
+        clearAuthStorage()
         localStorage.removeItem('hasRazorpayId')
         navigate('/login')
     }

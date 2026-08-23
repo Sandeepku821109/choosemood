@@ -66,7 +66,7 @@ const TrackingNumberFind = () => {
           name: p.name || p.title || p.productName || 'Product',
           qty: p.quantity || p.qty || p.count || 1,
           price: (p.price || p.unitPrice || p.salePrice || 0),
-          image: p.image || p.thumbnail || ''
+          image: p.image || p.productImage || p.thumbnail || ''
         }))
       : []
 

@@ -185,7 +185,7 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center gap-6 sm:gap-10 h-9 text-[11px] sm:text-xs tracking-[0.18em] uppercase font-medium">
             <span className="hidden sm:flex items-center gap-1.5"><Truck size={13} className="text-[#E72744]" /> Free shipping over ₹999</span>
-            <span className="flex items-center gap-1.5"><RefreshCcw size={13} className="text-[#E72744]" /> 7-day easy returns</span>
+            <span className="flex items-center gap-1.5"><RefreshCcw size={13} className="text-[#E72744]" /> 2-day easy returns</span>
             <span className="hidden md:flex items-center gap-1.5"><BadgeCheck size={13} className="text-[#E72744]" /> 100% authentic</span>
             <span className="flex sm:hidden items-center gap-1.5"><Sparkles size={13} className="text-[#E72744]" /> New arrivals weekly</span>
           </div>
