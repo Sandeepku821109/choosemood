@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import Footer from './components/pages/Footer'
 import Navbar from './components/Navbar'
@@ -24,6 +24,8 @@ const Invoice = lazy(() => import('./components/order/Invoice'))
 const Checkout = lazy(() => import('./components/checkout/Checkout'))
 const TrackingNumberFind = lazy(() => import('./components/trackingOrder/trackingNumberfind'))
 const Wallet = lazy(() => import('./components/wallet/Wallet'))
+const RiderLogin = lazy(() => import('./components/rider/RiderLogin'))
+const RiderDashboard = lazy(() => import('./components/rider/RiderDashboard'))
 
 const PageLoader = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -32,9 +34,13 @@ const PageLoader = () => (
 )
 
 const App = () => {
+  const location = useLocation()
+  // Rider portal is a standalone experience - no store chrome
+  const isRiderRoute = location.pathname.startsWith('/rider')
+
   return (
     <div>
-      <Navbar />
+      {!isRiderRoute && <Navbar />}
       <ToastContainer />
       <Suspense fallback={<PageLoader />}>
         <Routes>
@@ -57,12 +63,14 @@ const App = () => {
           <Route path='/orders/:id' element={<OrderSuccess />} />
           <Route path='/invoice/:id' element={<Invoice />} />
           <Route path='/tracking-order' element={<TrackingNumberFind />} />
+          <Route path='/rider' element={<RiderLogin />} />
+          <Route path='/rider/dashboard' element={<RiderDashboard />} />
           <Route path='*' element={<NotFound />} />
           <Route path='/return-exchange-policy' element={<ReturnandExchnagePolicy />} />
         </Routes>
       </Suspense>
 
-      <Footer />
+      {!isRiderRoute && <Footer />}
     </div>
   )
 }

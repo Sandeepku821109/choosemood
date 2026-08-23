@@ -73,6 +73,9 @@ const BestSeller = () => {
         )
     }
 
+    // Hide the whole section on the storefront when there is nothing to show
+    if (!loading && !error && bestSellerProducts.length === 0) return null
+
     return (
         <section className="relative py-14 sm:py-20 lg:py-24 bg-ink-950 overflow-hidden">
             {/* Ambient decoration */}
@@ -102,13 +105,13 @@ const BestSeller = () => {
                 {/* Products Grid - 2 products per row */}
                 {bestSellerProducts.length > 0 ? (
                     <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:gap-7 max-w-4xl mx-auto">
-                        {bestSellerProducts.map((product) => (
+                        {bestSellerProducts.map((product, index) => (
                             <div key={product.id} className="group relative">
                                 {/* Rank Badge */}
                                 <div className="absolute -top-1.5 left-3 z-20">
                                     <div className="bg-gradient-to-br from-gold-300 via-gold-500 to-gold-700 text-ink-950 text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg ring-1 ring-gold-200/60 flex items-center gap-1">
                                         <Crown size={11} strokeWidth={2.5} />
-                                        #1
+                                        #{index + 1}
                                     </div>
                                 </div>
                                 <Products

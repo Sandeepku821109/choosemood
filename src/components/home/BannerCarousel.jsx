@@ -1,9 +1,12 @@
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules'
 import { ChevronLeft, ChevronRight, ShoppingBag, ArrowRight, ArrowUpRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { backendUrl } from '../../config'
+import { processImageUrl } from '../../utils/imageUtils'
 
 // Import Swiper styles
 import 'swiper/css'
@@ -11,53 +14,87 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import 'swiper/css/effect-fade'
 
+// Default banners shown when the admin hasn't added any slider yet
+const DEFAULT_BANNERS = [
+  {
+    id: 1,
+    title: "Summer Collection 2025",
+    subtitle: "Discover the Latest Trends",
+    description: "Explore our newest arrivals with up to 50% off on selected items. Limited time offer!",
+    buttonText: "Shop Now",
+    buttonLink: "/collections",
+    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
+    mobileImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    id: 2,
+    title: "Premium Quality Products",
+    subtitle: "Crafted with Excellence",
+    description: "Experience luxury and comfort with our premium product line. Quality guaranteed.",
+    buttonText: "Explore Premium",
+    buttonLink: "/collections?category=premium",
+    image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=2126&q=80",
+    mobileImage: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    id: 3,
+    title: "Flash Sale",
+    subtitle: "Up to 70% Off",
+    description: "Don't miss out on our biggest sale of the year. Hurry, limited stock available!",
+    buttonText: "Shop Sale",
+    buttonLink: "/collections?sale=true",
+    image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
+    mobileImage: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    id: 4,
+    title: "New Arrivals",
+    subtitle: "Fresh & Trendy",
+    description: "Check out our latest collection featuring the most trending styles of the season.",
+    buttonText: "View New",
+    buttonLink: "/collections?new=true",
+    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2340&q=80",
+    mobileImage: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+  }
+]
+
+// Map backend slider doc { _id, name, link, images[] } -> carousel slide.
+// First uploaded image is used for desktop; if a second image exists it is
+// used as the mobile variant (no need to upload anything twice).
+const mapSliderDoc = (doc) => ({
+  id: doc._id,
+  title: doc.name || 'New Collection',
+  subtitle: doc.subtitle || '',
+  description: doc.description || '',
+  buttonText: 'Shop Now',
+  buttonLink: doc.link || '/collections',
+  image: processImageUrl(doc.images?.[0]),
+  mobileImage: processImageUrl(doc.images?.[1] || doc.images?.[0])
+})
+
 const BannerCarousel = () => {
   const navigate = useNavigate()
   const [activeSlide, setActiveSlide] = useState(0)
+  const [slides, setSlides] = useState(DEFAULT_BANNERS)
 
-  // Banner data
-  const bannerData = [
-    {
-      id: 1,
-      title: "Summer Collection 2025",
-      subtitle: "Discover the Latest Trends",
-      description: "Explore our newest arrivals with up to 50% off on selected items. Limited time offer!",
-      buttonText: "Shop Now",
-      buttonLink: "/collections",
-      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-      mobileImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-    },
-    {
-      id: 2,
-      title: "Premium Quality Products",
-      subtitle: "Crafted with Excellence",
-      description: "Experience luxury and comfort with our premium product line. Quality guaranteed.",
-      buttonText: "Explore Premium",
-      buttonLink: "/collections?category=premium",
-      image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2126&q=80",
-      mobileImage: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-    },
-    {
-      id: 3,
-      title: "Flash Sale",
-      subtitle: "Up to 70% Off",
-      description: "Don't miss out on our biggest sale of the year. Hurry, limited stock available!",
-      buttonText: "Shop Sale",
-      buttonLink: "/collections?sale=true",
-      image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-      mobileImage: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-    },
-    {
-      id: 4,
-      title: "New Arrivals",
-      subtitle: "Fresh & Trendy",
-      description: "Check out our latest collection featuring the most trending styles of the season.",
-      buttonText: "View New",
-      buttonLink: "/collections?new=true",
-      image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80",
-      mobileImage: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+  // Load admin-managed banners; keep defaults when none exist yet
+  useEffect(() => {
+    let cancelled = false
+    const loadSliders = async () => {
+      try {
+        const resp = await axios.get(`${backendUrl}/api/slider/all`)
+        const docs = resp.data?.sliders || []
+        const mapped = docs
+          .filter((d) => Array.isArray(d.images) && d.images.length > 0)
+          .map(mapSliderDoc)
+        if (!cancelled && mapped.length > 0) setSlides(mapped)
+      } catch (error) {
+        console.error('Failed to load banner sliders:', error)
+      }
     }
-  ]
+    loadSliders()
+    return () => { cancelled = true }
+  }, [])
 
   const handleSlideChange = (swiper) => {
     setActiveSlide(swiper.realIndex)
@@ -65,6 +102,21 @@ const BannerCarousel = () => {
 
   const handleButtonClick = (link) => {
     navigate(link)
+  }
+
+  // Split title so the last word gets the gradient treatment (handles single-word titles)
+  const renderTitle = (title) => {
+    const words = String(title || '').trim().split(/\s+/)
+    if (words.length <= 1) {
+      return <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200">{words[0]}</span>
+    }
+    const last = words.pop()
+    return (
+      <>
+        {words.join(' ')}{' '}
+        <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200">{last}</span>
+      </>
+    )
   }
 
   return (
@@ -98,7 +150,7 @@ const BannerCarousel = () => {
         onSlideChange={handleSlideChange}
         className="banner-carousel group/carousel"
       >
-        {bannerData.map((slide, index) => {
+        {slides.map((slide, index) => {
           const isActive = index === activeSlide
           return (
             <SwiperSlide key={slide.id}>
@@ -119,6 +171,8 @@ const BannerCarousel = () => {
                     className={`block sm:hidden w-full h-full object-cover ${isActive ? 'animate-ken-burns' : ''}`}
                     loading={index === 0 ? "eager" : "lazy"}
                   />
+                  {/* Readability overlay for text content */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
                 </div>
 
                 {/* Content */}
@@ -126,23 +180,26 @@ const BannerCarousel = () => {
                   <div className="container mx-auto px-6 sm:px-10 lg:px-16 xl:px-24">
                     <div className="max-w-2xl">
                       {/* Eyebrow */}
-                      <div className={`flex items-center gap-4 mb-5 sm:mb-7 ${isActive ? 'animate-slide-up' : 'opacity-0'}`}>
-                        <span className="gold-line w-12"></span>
-                        <span className="text-gold-300 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.32em]">
-                          {slide.subtitle}
-                        </span>
-                      </div>
+                      {slide.subtitle && (
+                        <div className={`flex items-center gap-4 mb-5 sm:mb-7 ${isActive ? 'animate-slide-up' : 'opacity-0'}`}>
+                          <span className="gold-line w-12"></span>
+                          <span className="text-gold-300 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.32em]">
+                            {slide.subtitle}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Title */}
                       <h1 className={`font-serif text-ink-50 text-4xl sm:text-6xl lg:text-7xl leading-[1.05] mb-5 sm:mb-7 ${isActive ? 'animate-slide-up delay-100' : 'opacity-0'}`}>
-                        {slide.title.split(' ').slice(0, -1).join(' ')}{' '}
-                        <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200">{slide.title.split(' ').slice(-1)}</span>
+                        {renderTitle(slide.title)}
                       </h1>
 
                       {/* Description */}
-                      <p className={`text-ink-100/80 text-sm sm:text-base lg:text-lg leading-relaxed max-w-lg mb-8 sm:mb-10 font-light ${isActive ? 'animate-slide-up delay-300' : 'opacity-0'}`}>
-                        {slide.description}
-                      </p>
+                      {slide.description && (
+                        <p className={`text-ink-100/80 text-sm sm:text-base lg:text-lg leading-relaxed max-w-lg mb-8 sm:mb-10 font-light ${isActive ? 'animate-slide-up delay-300' : 'opacity-0'}`}>
+                          {slide.description}
+                        </p>
+                      )}
 
                       {/* CTA Buttons */}
                       <div className={`flex flex-col xs:flex-row sm:flex-row gap-3 sm:gap-4 ${isActive ? 'animate-slide-up delay-500' : 'opacity-0'}`}>
@@ -154,14 +211,16 @@ const BannerCarousel = () => {
                           <span>{slide.buttonText}</span>
                           <ArrowRight size={16} className="group-hover/btn:translate-x-1.5 transition-transform duration-300" />
                         </button>
-                        
-                        <button
-                          onClick={() => navigate('/about')}
-                          className="group/about inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-[13px] font-semibold uppercase tracking-[0.16em] text-ink-50 ring-1 ring-white/30 backdrop-blur-md hover:bg-white/10 hover:ring-white/60 transition-all duration-500"
-                        >
-                          <span>Learn More</span>
-                          <ArrowUpRight size={15} className="group-hover/about:translate-x-0.5 group-hover/about:-translate-y-0.5 transition-transform duration-300" />
-                        </button>
+
+                        {!slide.description && (
+                          <button
+                            onClick={() => navigate(slide.buttonLink)}
+                            className="group/about inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-[13px] font-semibold uppercase tracking-[0.16em] text-ink-50 ring-1 ring-white/30 backdrop-blur-md hover:bg-white/10 hover:ring-white/60 transition-all duration-500"
+                          >
+                            <span>Learn More</span>
+                            <ArrowUpRight size={15} className="group-hover/about:translate-x-0.5 group-hover/about:-translate-y-0.5 transition-transform duration-300" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
