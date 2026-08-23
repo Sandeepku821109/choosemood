@@ -5,6 +5,7 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import Footer from './components/pages/Footer'
 import Navbar from './components/Navbar'
+import BrandLoader from './components/common/BrandLoader'
 
 const Signup = lazy(() => import('./components/auth/Signup'))
 const VerifyOtp = lazy(() => import('./components/auth/VerifyOtp'))
@@ -29,12 +30,6 @@ const Wallet = lazy(() => import('./components/wallet/Wallet'))
 const RiderLogin = lazy(() => import('./components/rider/RiderLogin'))
 const RiderDashboard = lazy(() => import('./components/rider/RiderDashboard'))
 
-const PageLoader = () => (
-  <div className="min-h-[60vh] flex items-center justify-center">
-    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#E72744]"></div>
-  </div>
-)
-
 const App = () => {
   const location = useLocation()
   // Rider portal is a standalone experience - no store chrome
@@ -53,7 +48,7 @@ const App = () => {
         draggable
         theme="light"
       />
-      <Suspense fallback={<PageLoader />}>
+      <Suspense fallback={<BrandLoader label="Loading page" />}>
         <Routes>
           <Route path='/signup' element={<Signup />} />
           <Route path='/login' element={<Login />} />

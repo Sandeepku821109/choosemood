@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { CheckCircle, Package, Truck, Clock, ArrowRight } from 'lucide-react'
 import axios from 'axios'
 import { backendUrl } from '../../config'
+import BrandLoader from '../common/BrandLoader'
 
 const OrderSuccess = () => {
   const { orderId } = useParams()
@@ -38,14 +39,7 @@ const OrderSuccess = () => {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E72744] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading order details...</p>
-        </div>
-      </div>
-    )
+    return <BrandLoader label="Loading order details" fullScreen />
   }
 
   if (error || !order) {

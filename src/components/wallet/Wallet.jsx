@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import BrandLoader from '../common/BrandLoader'
 import {
   Wallet as WalletIcon,
   Plus,
@@ -142,14 +143,7 @@ const Wallet = () => {
   }
 
   if (loading && transactions.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#E72744] mx-auto mb-4" />
-          <p className="text-gray-600">Loading your wallet...</p>
-        </div>
-      </div>
-    )
+    return <BrandLoader label="Loading your wallet" fullScreen />
   }
 
   return (

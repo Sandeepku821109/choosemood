@@ -7,6 +7,7 @@ import {
   ArrowLeft, Printer, Mail, Phone, MapPin, CreditCard,
   Truck, CalendarDays, BadgeCheck, Hourglass, Package
 } from 'lucide-react'
+import BrandLoader from '../common/BrandLoader'
 
 const formatINR = (n) =>
   `₹${(Number(n) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -62,11 +63,7 @@ const Invoice = () => {
   }, [id])
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#E72744]" />
-      </div>
-    )
+    return <BrandLoader label="Preparing your invoice" fullScreen />
   }
 
   if (!order) {

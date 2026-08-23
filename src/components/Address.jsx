@@ -12,6 +12,7 @@ import {
   Home,
   X
 } from 'lucide-react'
+import BrandLoader from './common/BrandLoader'
 import { 
   fetchAddress, 
   createAddress, 
@@ -252,16 +253,7 @@ const Address = () => {
   }
 
   if (loading && addresses.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 animate-spin text-[#E72744]" />
-            <span className="ml-2 text-gray-600">Loading addresses...</span>
-          </div>
-        </div>
-      </div>
-    )
+    return <BrandLoader label="Loading addresses" fullScreen />
   }
 
   return (

@@ -3,6 +3,7 @@ import axios from 'axios'
 import { backendUrl } from '../../config'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
+import BrandLoader from '../common/BrandLoader'
 
 const OrderSuccess = () => {
   const [loading, setLoading] = useState(true)
@@ -84,11 +85,7 @@ const OrderSuccess = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#E72744]"></div>
-      </div>
-    )
+    return <BrandLoader label="Loading order details" fullScreen />
   }
 
   const paymentStatusDisplay = getPaymentStatusDisplay(order?.paymentStatus, order?.paymentMethod)

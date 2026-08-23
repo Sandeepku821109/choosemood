@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import BrandLoader from './common/BrandLoader'
 import { 
   Package, 
   Clock, 
@@ -308,14 +309,7 @@ const Order = () => {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading your orders...</p>
-        </div>
-      </div>
-    )
+    return <BrandLoader label="Loading your orders" fullScreen />
   }
 
   if (error) {
