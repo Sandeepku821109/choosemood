@@ -13,6 +13,8 @@ const SORT_OPTIONS = [
     { value: 'new', label: 'Newest First' }
 ]
 
+
+
 const RATING_OPTIONS = [
     { value: 0, label: 'All ratings' },
     { value: 4, label: '4★ & up' },
@@ -189,7 +191,7 @@ const Collection = () => {
         setLoading(true)
         setError('')
         try {
-            const response = await axios.get(`${backendUrl}/api/products`, { params: { limit: 1000 } })
+            const response = await axios.get(`${backendUrl}/api/products`)
             const allData = response.data.products.map((product) => ({
                 id: product.id || product._id,
                 name: product.name,

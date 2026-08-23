@@ -58,19 +58,28 @@ const DEFAULT_BANNERS = [
   }
 ]
 
-// Map backend slider doc { _id, name, link, images[] } -> carousel slide.
-// First uploaded image is used for desktop; if a second image exists it is
-// used as the mobile variant (no need to upload anything twice).
-const mapSliderDoc = (doc) => ({
-  id: doc._id,
-  title: doc.name || 'New Collection',
-  subtitle: doc.subtitle || '',
-  description: doc.description || '',
-  buttonText: 'Shop Now',
-  buttonLink: doc.link || '/collections',
-  image: processImageUrl(doc.images?.[0]),
-  mobileImage: processImageUrl(doc.images?.[1] || doc.images?.[0])
-})
+// Map backend slider doc { _id, name, link, images[] } -> carousel slides.
+// Standard admin usage: images[0] = desktop banner, images[1] = mobile
+// variant (single slide, no need to upload anything twice). If a doc holds
+// MORE than two images the admin clearly uploaded several banners into it,
+// so each image becomes its own slide instead of being silently ignored.
+const mapSliderDoc = (doc) => {
+  const buildSlide = (image, mobileImage, suffix) => ({
+    id: `${doc._id}${suffix}`,
+    title: doc.name || 'New Collection',
+    subtitle: doc.subtitle || '',
+    description: doc.description || '',
+    buttonText: 'Shop Now',
+    buttonLink: doc.link || '/collections',
+    image,
+    mobileImage,
+  })
+
+  const imgs = (doc.images || []).map((img) => processImageUrl(img)).filter(Boolean)
+  if (imgs.length === 0) return []
+  if (imgs.length <= 2) return [buildSlide(imgs[0], imgs[1] || imgs[0], '')]
+  return imgs.map((img, i) => buildSlide(img, img, `-${i}`))
+}
 
 const BannerCarousel = () => {
   const navigate = useNavigate()
@@ -84,9 +93,7 @@ const BannerCarousel = () => {
       try {
         const resp = await axios.get(`${backendUrl}/api/slider/all`)
         const docs = resp.data?.sliders || []
-        const mapped = docs
-          .filter((d) => Array.isArray(d.images) && d.images.length > 0)
-          .map(mapSliderDoc)
+        const mapped = docs.flatMap((d) => mapSliderDoc(d))
         if (!cancelled && mapped.length > 0) setSlides(mapped)
       } catch (error) {
         console.error('Failed to load banner sliders:', error)

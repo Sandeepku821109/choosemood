@@ -6,6 +6,7 @@ import addressReducer from './slices/addressSlice'
 import paymentReducer from './slices/paymentSlice'
 import walletReducer from './slices/walletSlice'
 import riderReducer from './slices/riderSlice'
+import productReducer from './slices/productSlice'
 // ... other imports
 import contactReducer from './slices/contactSlice'
 
@@ -18,6 +19,7 @@ export const store = configureStore({
     payment: paymentReducer,
     wallet: walletReducer,
     rider: riderReducer,
+    product: productReducer,
     contact: contactReducer
     // ... other reducers
   },

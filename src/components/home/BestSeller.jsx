@@ -1,52 +1,21 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import { backendUrl } from '../../config'
+import React, { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchAllProducts, selectBestSellers, selectProductStatus, selectProductError } from '../../store/slices/productSlice'
 import Products from '../products/Products'
 import { Crown, Star } from 'lucide-react'
 
 const BestSeller = () => {
-    const [bestSellerProducts, setBestSellerProducts] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const dispatch = useDispatch()
+    const bestSellerProducts = useSelector(selectBestSellers)
+    const status = useSelector(selectProductStatus)
+    const error = useSelector(selectProductError)
+    const loading = status === 'loading'
 
     useEffect(() => {
-        fetchBestSellerProducts()
-    }, [])
-
-    const fetchBestSellerProducts = async () => {
-        try {
-            setLoading(true)
-            const response = await axios.get(`${backendUrl}/api/products`, {
-                params: { limit: 1000, bestSeller: 'true' }
-            })
-
-            // Filter only bestseller products
-            const bestSellerData = response.data.products
-                .filter(product => (product.bestSeller ?? product.bestseller) === true)
-                .slice(0, 6) // Show only top 6 bestsellers
-                .map((product) => {
-                    return {
-                        id: product.id || product._id,
-                        name: product.name,
-                        description: product.description,
-                        price: product.price,
-                        image: product.image,
-                        quantity: product.quantity,
-                        discount: product.discount || 0,
-                        rating: product.rating || 0,
-                        bestseller: (product.bestSeller ?? product.bestseller) || false,
-                        wishlist: product.wishlist || false
-                    }
-                })
-
-            setBestSellerProducts(bestSellerData)
-        } catch (error) {
-            console.error('Error fetching bestseller products:', error)
-            setError('Failed to load bestseller products')
-        } finally {
-            setLoading(false)
+        if (status === 'idle') {
+            dispatch(fetchAllProducts())
         }
-    }
+    }, [status, dispatch])
 
     if (loading) {
         return (

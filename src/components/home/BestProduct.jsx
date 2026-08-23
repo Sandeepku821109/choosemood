@@ -1,52 +1,21 @@
-import axios from 'axios'
-import React, { useState, useEffect } from 'react'
-import { backendUrl } from '../../config'
+import React, { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchAllProducts, selectTopRated, selectProductStatus, selectProductError } from '../../store/slices/productSlice'
 import Products from '../products/Products'
 import { Star, TrendingUp } from 'lucide-react'
 
 const BestProduct = () => {
-    const [products, setProducts] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const dispatch = useDispatch()
+    const products = useSelector(selectTopRated)
+    const status = useSelector(selectProductStatus)
+    const error = useSelector(selectProductError)
+    const loading = status === 'loading'
 
     useEffect(() => {
-        fetchProducts()
-    }, [])
-
-    const fetchProducts = async () => {
-        try {
-            setLoading(true)
-            const response = await axios.get(`${backendUrl}/api/products`, {
-                params: { limit: 1000 }
-            })
-            
-            // Filter for bestseller products or top-rated products
-            const bestProducts = response.data.products
-                .filter(product => (product.bestSeller ?? product.bestseller) || product.rating >= 4)
-                .slice(0, 8) // Show 8 products (2 rows x 4 products on desktop, 4 rows x 2 products on mobile)
-                .map((product) => {
-                    return {
-                        id: product.id || product._id,
-                        name: product.name,
-                        description: product.description,
-                        price: product.price,
-                        image: product.image,
-                        quantity: product.quantity,
-                        discount: product.discount || 0,
-                        rating: product.rating || 0,
-                        bestseller: (product.bestSeller ?? product.bestseller) || false,
-                        wishlist: product.wishlist || false
-                    }
-                })
-
-            setProducts(bestProducts)
-        } catch (error) {
-            console.error('Error fetching products:', error)
-            setError('Failed to load products')
-        } finally {
-            setLoading(false)
+        if (status === 'idle') {
+            dispatch(fetchAllProducts())
         }
-    }
+    }, [status, dispatch])
 
     if (loading) {
         return (
