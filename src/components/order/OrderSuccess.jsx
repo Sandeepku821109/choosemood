@@ -1,6 +1,6 @@
 
 import axios from 'axios'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 

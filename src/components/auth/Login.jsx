@@ -1,7 +1,7 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 // import { toast } from 'react-toastify'
 
 const Login = () => {
@@ -54,7 +54,7 @@ const Login = () => {
             const userId = localStorage.getItem('userId')
             const userEmail = localStorage.getItem('userEmail')
 
-            console.log('ðŸ” Checking authentication:', {
+            console.log('🔐 Checking authentication:', {
                 hasAuthToken: !!authToken,
                 hasToken: !!token,
                 hasUserId: !!userId,
@@ -122,12 +122,12 @@ const Login = () => {
     const fetchUserData = async () => {
         try {
             const headers = getAuthHeaders()
-            console.log('ðŸ“¡ Fetching user data with headers:', headers)
+            console.log('📡 Fetching user data with headers:', headers)
             
             const response = await axios.get(`${backendUrl}/api/users/profile`, { headers })
             const user = response.data.data || response.data.user || response.data
             
-            console.log('ðŸ‘¤ User data received:', user)
+            console.log('👤 User data received:', user)
             
             // Store user ID in localStorage for future use
             const userId = user.id || user._id || user.userId
@@ -174,7 +174,7 @@ const Login = () => {
                 userId: fallbackUserId
             })
             
-            console.log('ðŸ’¾ Using fallback user data with userId:', fallbackUserId)
+            console.log('💾 Using fallback user data with userId:', fallbackUserId)
         }
     }
 
@@ -255,7 +255,7 @@ const Login = () => {
     }
 
     const handleLogout = () => {
-        console.log('ðŸšª Logging out user')
+        console.log('🚪 Logging out user')
         localStorage.removeItem('authToken')
         localStorage.removeItem('token')
         localStorage.removeItem('userEmail')

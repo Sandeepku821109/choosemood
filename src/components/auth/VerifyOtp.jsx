@@ -1,6 +1,6 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 import React, { useState, useRef, useEffect } from 'react'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const VerifyOtp = () => {
@@ -321,7 +321,7 @@ const VerifyOtp = () => {
                         onClick={() => navigate('/login')}
                         className="text-gray-500 hover:text-gray-700 text-sm transition-colors duration-200 block w-full"
                     >
-                        â† Back to Login
+                        ← Back to Login
                     </button>
                     <button
                         onClick={() => navigate('/signup')}

@@ -1,6 +1,6 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 import React, { useState, useEffect, useRef } from 'react'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const Otp = () => {
@@ -250,7 +250,7 @@ const Otp = () => {
                             onClick={() => navigate(-1)}
                             className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
                         >
-                            â† Back to email
+                            ← Back to email
                         </button>
                     </div>
                 </div>

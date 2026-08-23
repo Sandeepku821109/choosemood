@@ -2,7 +2,7 @@ import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Copy, Loader2, Search } from 'lucide-react'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 import toast, { Toaster } from 'react-hot-toast'
 
 

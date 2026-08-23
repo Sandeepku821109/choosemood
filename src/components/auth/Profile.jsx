@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 import { useNavigate } from 'react-router-dom'
 import { processImageUrl, handleImageError } from '../../utils/imageUtils'
 

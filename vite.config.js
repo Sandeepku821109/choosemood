@@ -12,5 +12,16 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom', '@reduxjs/toolkit', 'react-redux'],
+          'ui-libs': ['framer-motion', 'swiper', 'lucide-react', 'react-toastify', 'react-hot-toast', 'react-inner-image-zoom'],
+          pdf: ['jspdf']
+        }
+      }
+    }
   }
 })

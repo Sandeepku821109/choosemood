@@ -1,7 +1,7 @@
 import axios from 'axios'
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 
 // helper: ensure presence flags exist when relevant localStorage keys are set
 const normalizeLocalStorageFlags = () => {

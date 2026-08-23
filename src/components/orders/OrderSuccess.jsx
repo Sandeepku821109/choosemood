@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { CheckCircle, Package, Truck, Clock, ArrowRight } from 'lucide-react'
 import axios from 'axios'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 
 const OrderSuccess = () => {
   const { orderId } = useParams()

@@ -1,6 +1,6 @@
 import axios from 'axios'
 import React, { useState, useEffect } from 'react'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 import Products from '../products/Products'
 import { Star, TrendingUp } from 'lucide-react'
 

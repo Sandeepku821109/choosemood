@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useParams, useNavigate } from 'react-router-dom'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 import { Loader2, Copy, ArrowLeft } from 'lucide-react'
 
 const TrackingNumberDetails = () => {

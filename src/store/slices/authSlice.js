@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import axios from 'axios'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 
 // Normalize localStorage presence into explicit "true" flags
 const normalizeLocalStorageFlags = () => {

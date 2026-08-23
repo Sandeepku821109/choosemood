@@ -25,7 +25,7 @@ import {
   ExternalLink
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { backendUrl } from '../App'
+import { backendUrl } from '../config'
 
 const Order = () => {
   const {trackingNumber }= useParams();

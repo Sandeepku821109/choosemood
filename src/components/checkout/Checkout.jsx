@@ -26,7 +26,7 @@ import {
   Wallet
 } from 'lucide-react'
 import axios from 'axios'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 import {
   fetchAddress,
   createAddress,

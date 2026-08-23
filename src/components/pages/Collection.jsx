@@ -2,7 +2,7 @@ import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { SlidersHorizontal, X, Search, ChevronDown, AlertTriangle } from 'lucide-react'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 import Products from '../products/Products'
 
 const SORT_OPTIONS = [

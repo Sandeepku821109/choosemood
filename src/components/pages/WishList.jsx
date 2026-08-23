@@ -13,7 +13,7 @@ import {
 } from '../../store/slices/wishlistSlice.js'
 import { useDispatch, useSelector } from 'react-redux'
 import Products from '../products/Products'
-import { backendUrl } from '../../App'
+import { backendUrl } from '../../config'
 
 const WishList = () => {
   const navigate = useNavigate()
