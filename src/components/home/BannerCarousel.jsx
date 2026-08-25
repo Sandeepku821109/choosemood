@@ -18,7 +18,7 @@ import 'swiper/css/effect-fade'
 const DEFAULT_BANNERS = [
   {
     id: 1,
-    title: "Summer Collection 2025",
+    title: "Summer Collection 2026",
     subtitle: "Discover the Latest Trends",
     description: "Explore our newest arrivals with up to 50% off on selected items. Limited time offer!",
     buttonText: "Shop Now",

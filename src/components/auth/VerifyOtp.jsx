@@ -133,8 +133,10 @@ const VerifyOtp = () => {
                 
                 // Redirect after a short delay to show success message
                 setTimeout(() => {
-                    // Use replace instead of navigate to prevent back navigation issues
-                    navigate(returnUrl, { replace: true })
+                    // Full browser refresh so every component (navbar, cart,
+                    // profile...) re-reads localStorage and shows user data.
+                    // replace() = same as { replace: true }, no back-history entry
+                    window.location.replace(returnUrl)
                 }, 1500)
             }
         } catch (error) {
