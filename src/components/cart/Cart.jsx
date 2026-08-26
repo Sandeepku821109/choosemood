@@ -294,6 +294,7 @@ const Cart = () => {
     )
     const checkoutData = {
       items: checkoutItems,
+      selectedItemIds: checkoutItems.map(i => i.itemId || i.productId || i.id),
       subtotal: selectedSubtotal,
       shipping: selectedShipping,
       total: selectedTotal,

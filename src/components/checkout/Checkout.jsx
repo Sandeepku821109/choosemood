@@ -498,8 +498,13 @@ const Checkout = () => {
         { headers: getAuthHeaders() }
       )
       if (resp.data?.success && resp.data?.data?.coupon) {
-        setDiscountCoupon(resp.data.data.coupon)
-        setDiscountMsg({ type: 'success', text: `Coupon applied — you save ₹${resp.data.data.coupon.discountAmount}` })
+        const c = resp.data.data.coupon
+        setDiscountCoupon(c)
+        if (c.freeDelivery) {
+          setDiscountMsg({ type: 'success', text: 'Free delivery coupon applied — shipping waived!' })
+        } else {
+          setDiscountMsg({ type: 'success', text: `Coupon applied — you save ₹${c.discountAmount}` })
+        }
       } else {
         setDiscountMsg({ type: 'error', text: resp.data?.message || 'Invalid or expired coupon' })
       }
@@ -518,7 +523,7 @@ const Checkout = () => {
   }
 
   const couponDiscountAmount = discountCoupon ? (discountCoupon.discountAmount || 0) : 0
-  const freeDeliveryActive = couponApplied
+  const freeDeliveryActive = couponApplied || discountCoupon?.freeDelivery
   // Mirror backend calculateOrderTotals: subtotal - coupon + shipping, wallet applied last
   const baseTotal =
     (parseFloat(checkoutData?.subtotal) || 0) -
@@ -546,6 +551,7 @@ const Checkout = () => {
     try {
       const orderData = {
         items: checkoutData.items,
+        selectedItemIds: checkoutData.selectedItemIds || checkoutData.items?.map(i => i._id || i.itemId || i.id) || [],
         shippingAddress: selectedAddress,
         paymentMethod: paymentMethod,
         couponCode: discountCoupon?.code || '',
@@ -589,6 +595,7 @@ const Checkout = () => {
         const orderDetails = {
           total: payableTotal,
           items: checkoutData.items,
+          selectedItemIds: checkoutData.selectedItemIds || checkoutData.items?.map(i => i._id || i.itemId || i.id) || [],
           orderId: `order_${Date.now()}`,
           addressId: selectedAddress._id,
           userId: userData.userId,

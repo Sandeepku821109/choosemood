@@ -137,6 +137,7 @@ export const createRazorpayOrder = async (orderData) => {
       couponCode: orderData.couponCode || '',
       useWalletBalance: !!orderData.useWalletBalance,
       freeDeliveryCode: orderData.freeDeliveryCode || '',
+      selectedItemIds: orderData.selectedItemIds || [],
       notes: {
         userId: orderData.userId,
         orderId: orderData.orderId,
@@ -341,6 +342,7 @@ export const verifyPaymentAndCreateOrder = async (paymentData) => {
         couponCode: paymentData.orderDetails.couponCode || '',
         useWalletBalance: !!paymentData.orderDetails.useWalletBalance,
         freeDeliveryCode: paymentData.orderDetails.freeDeliveryCode || '',
+        selectedItemIds: paymentData.orderDetails.selectedItemIds || [],
         orderDetails: {
           orderId: paymentData.orderDetails.orderId,
           addressId: paymentData.orderDetails.addressId,

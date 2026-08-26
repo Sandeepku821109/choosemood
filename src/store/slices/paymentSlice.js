@@ -405,6 +405,7 @@ export const cashOnDelivery = createAsyncThunk(
         addressId: addressId,
         shippingAddress: shippingAddress,
         items: orderData.items,
+        selectedItemIds: orderData.selectedItemIds || orderData.items?.map(i => i._id || i.itemId || i.id) || [],
         total: totalAmount,
         totalAmount: totalAmount,
         subtotal: orderData.subtotal || totalAmount,
