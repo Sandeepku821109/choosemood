@@ -51,8 +51,13 @@ const Navbar = () => {
   // Calculate wishlist count (number of unique items)
   const wishlistCount = wishlistItems.length
 
+  // Guard against re-entrant calls
+  const checkingRef = React.useRef(false)
+
   // Check session with backend — the httpOnly cookie is the source of truth
   const checkAuthentication = async () => {
+    if (checkingRef.current) return
+    checkingRef.current = true
     try {
       const response = await axios.get(`${backendUrl}/api/users/session`)
       if (response.data?.success && response.data?.user) {
@@ -63,9 +68,6 @@ const Navbar = () => {
         if (user.email) localStorage.setItem('userEmail', user.email)
         if (user.id) localStorage.setItem('userId', user.id)
         localStorage.setItem('isLoggedIn', 'true')
-        dispatch(fetchCart())
-        dispatch(fetchWishlistItems())
-        window.dispatchEvent(new Event('auth-change'))
         return
       }
     } catch {
@@ -82,13 +84,11 @@ const Navbar = () => {
       setIsAuthenticated(true)
       const storedUserName = localStorage.getItem('userName')
       setUserName(storedUserName || userEmail?.split('@')[0] || 'User')
-      dispatch(fetchCart())
-      dispatch(fetchWishlistItems())
-      window.dispatchEvent(new Event('auth-change'))
     } else {
       setIsAuthenticated(false)
       setUserName('')
     }
+    checkingRef.current = false
   }
 
   useEffect(() => {
@@ -100,12 +100,10 @@ const Navbar = () => {
 
     window.addEventListener('auth-change', handleAuthRelatedChange)
     window.addEventListener('username-updated', handleAuthRelatedChange)
-    window.addEventListener('storage', handleAuthRelatedChange)
 
     return () => {
       window.removeEventListener('auth-change', handleAuthRelatedChange)
       window.removeEventListener('username-updated', handleAuthRelatedChange)
-      window.removeEventListener('storage', handleAuthRelatedChange)
     }
   }, [dispatch])
 

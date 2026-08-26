@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { 
   ArrowLeft, 
   ShoppingBag, 
@@ -124,10 +124,11 @@ const Cart = () => {
   const selectedShipping = selectedSubtotal >= 999 ? 0 : 49
   const selectedTotal = selectedSubtotal + selectedShipping
 
+  const isAuthenticated = useMemo(() => checkAuthentication(), [])
+
   // Fetch cart on component mount if authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('User is authenticated, fetching cart...')
       dispatch(fetchCart())
     }
   }, [dispatch, isAuthenticated])
