@@ -1,5 +1,5 @@
 import axios from '../../utils/api'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { backendUrl } from '../../config'
 import { User, Phone, CheckCircle, Loader2 } from 'lucide-react'
@@ -8,11 +8,34 @@ const CompleteProfile = () => {
     const [name, setName] = useState('')
     const [phoneNumber, setPhoneNumber] = useState('')
     const [loading, setLoading] = useState(false)
+    const [fetchLoading, setFetchLoading] = useState(true)
     const [error, setError] = useState('')
     const navigate = useNavigate()
     const location = useLocation()
 
     const returnUrl = location.state?.returnUrl || '/'
+
+    useEffect(() => {
+        const fetchExistingProfile = async () => {
+            try {
+                const response = await axios.get(`${backendUrl}/api/users/session`)
+                if (response.data?.success && response.data?.user) {
+                    const user = response.data.user
+                    if (user.name) setName(user.name)
+                    if (user.phoneNumber) setPhoneNumber(user.phoneNumber)
+                    if (user.profileCompleted) {
+                        navigate(returnUrl, { replace: true })
+                        return
+                    }
+                }
+            } catch {
+                // Not authenticated yet or error — show blank form
+            } finally {
+                setFetchLoading(false)
+            }
+        }
+        fetchExistingProfile()
+    }, [])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -61,6 +84,17 @@ const CompleteProfile = () => {
 
     const handleSkip = () => {
         navigate(returnUrl, { replace: true })
+    }
+
+    if (fetchLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-white via-white to-[#FFF1F3] flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading profile...</p>
+                </div>
+            </div>
+        )
     }
 
     return (

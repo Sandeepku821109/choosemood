@@ -82,7 +82,7 @@ const Signup = () => {
         normalizeLocalStorageFlags()
 
         // navigate to OTP verify (will also call handleSignupSuccess which sets tokens/flags if present)
-        navigate('/verifyOtp', { state: { email } })
+        navigate('/verifyOtp', { state: { email, type: 'signup' } })
 
         handleSignupSuccess(response)
       }
@@ -100,7 +100,7 @@ const Signup = () => {
         } else {
           // User exists but not verified, send to OTP verification
           localStorage.setItem('userEmail', email)
-          navigate('/verifyOtp', { state: { email } })
+          navigate('/verifyOtp', { state: { email, type: 'signup' } })
         }
       } else {
         setError(error.response?.data?.message || 'Signup failed. Please try again.')

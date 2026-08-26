@@ -101,13 +101,18 @@ const VerifyOtp = () => {
         setSuccessMessage('')
 
         try {
-            const response = await axios.post(`${backendUrl}/api/users/verify`, {
+            const flowType = location.state?.type || 'signup'
+            const endpoint = flowType === 'login' 
+                ? `${backendUrl}/api/users/login` 
+                : `${backendUrl}/api/users/verify`
+
+            const response = await axios.post(endpoint, {
                 email: email,
                 otp: otpString
             })
             
             if (response.status === 200) {
-                setSuccessMessage('Account verified successfully!')
+                setSuccessMessage(flowType === 'login' ? 'Login successful!' : 'Account verified successfully!')
                 
                 // Store auth data — httpOnly cookie is primary; localStorage is fallback
                 if (response.data.token) {
@@ -125,6 +130,7 @@ const VerifyOtp = () => {
                     localStorage.setItem('userId', userId)
                     localStorage.setItem('userEmail', email)
                     if (user.name) localStorage.setItem('userName', user.name)
+                    if (user.phoneNumber) localStorage.setItem('userPhone', user.phoneNumber)
                 } else {
                     const fallbackUserId = btoa(email).replace(/[^a-zA-Z0-9]/g, '')
                     localStorage.setItem('userId', fallbackUserId)
@@ -132,11 +138,19 @@ const VerifyOtp = () => {
                 }
                 
                 const returnUrl = location.state?.returnUrl || location.state?.from || '/'
-                
-                // After OTP verification, collect profile data first
-                setTimeout(() => {
-                    navigate('/complete-profile', { replace: true, state: { returnUrl } })
-                }, 1500)
+                const profileCompleted = response.data.user?.profileCompleted
+
+                if (profileCompleted) {
+                    // Profile already done — go straight to app
+                    window.dispatchEvent(new Event('auth-change'))
+                    window.dispatchEvent(new Event('username-updated'))
+                    navigate(returnUrl, { replace: true })
+                } else {
+                    // Collect profile data first
+                    setTimeout(() => {
+                        navigate('/complete-profile', { replace: true, state: { returnUrl } })
+                    }, 1500)
+                }
             }
         } catch (error) {
             if (error.response?.status === 400) {

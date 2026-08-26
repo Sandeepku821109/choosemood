@@ -188,6 +188,7 @@ const Login = () => {
             navigate('/verifyOtp', { 
                 state: { 
                     email,
+                    type: 'login',
                     returnUrl: location.state?.returnUrl || location.state?.from || '/'
                 }
             })
