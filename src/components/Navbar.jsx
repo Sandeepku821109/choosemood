@@ -68,6 +68,7 @@ const Navbar = () => {
         if (user.email) localStorage.setItem('userEmail', user.email)
         if (user.id) localStorage.setItem('userId', user.id)
         localStorage.setItem('isLoggedIn', 'true')
+        checkingRef.current = false
         return
       }
     } catch {
