@@ -83,9 +83,8 @@ const Order = () => {
       // Show loading state
       setCancellingId(orderId)
 
-      const response = await axios.post(`${backendUrl}/api/orders/${orderId}/cancel`, {
+      const response = await axios.patch(`${backendUrl}/api/orders/${orderId}/cancel`, {
         reason: reason,
-        userId: userId // Add userId to the request body
       }, {
         headers: getAuthHeaders()
       })
