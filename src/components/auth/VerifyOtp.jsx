@@ -112,8 +112,13 @@ const VerifyOtp = () => {
                 // Store all authentication data properly
                 if (response.data.token) {
                     localStorage.setItem('authToken', response.data.token)
-                    localStorage.setItem('token', response.data.token) // Fallback for compatibility
+                    localStorage.setItem('token', response.data.token)
                 }
+                
+                // Set all auth flags so Navbar and other components detect login
+                localStorage.setItem('isLoggedIn', 'true')
+                localStorage.setItem('hasToken', 'true')
+                localStorage.setItem('hasAuthToken', 'true')
                 
                 // Store user data if provided
                 if (response.data.user) {
@@ -122,7 +127,6 @@ const VerifyOtp = () => {
                     localStorage.setItem('userId', userId)
                     localStorage.setItem('userEmail', email)
                 } else {
-                    // Generate fallback userId if not provided
                     const fallbackUserId = btoa(email).replace(/[^a-zA-Z0-9]/g, '')
                     localStorage.setItem('userId', fallbackUserId)
                     localStorage.setItem('userEmail', email)

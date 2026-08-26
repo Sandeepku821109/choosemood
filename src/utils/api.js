@@ -51,6 +51,9 @@ axios.interceptors.response.use(
       clearAuthStorage()
       // Full reload resets Redux state; replace avoids a back-button trap
       window.location.replace('/login')
+      // Reset the flag after a delay in case the redirect doesn't happen
+      // (e.g., user cancels navigation or SPA handles it)
+      setTimeout(() => { redirecting = false }, 5000)
     }
 
     return Promise.reject(error)

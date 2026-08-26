@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
+import axios from 'axios'
+import { backendUrl } from '../config'
 import { fetchCart } from '../store/slices/cartSlice'
 import { fetchWishlistItems } from '../store/slices/wishlistSlice'
 import { 
@@ -108,8 +110,13 @@ const Navbar = () => {
   }, [])
 
   const handleLogout = () => {
+    // Clear httpOnly cookie on backend (fire-and-forget)
+    axios.post(`${backendUrl}/api/users/logout`).catch(() => {})
+
     localStorage.removeItem('authToken')
     localStorage.removeItem('token')
+    localStorage.removeItem('hasToken')
+    localStorage.removeItem('hasAuthToken')
     localStorage.removeItem('userEmail')
     localStorage.removeItem('userName')
     localStorage.removeItem('userId')

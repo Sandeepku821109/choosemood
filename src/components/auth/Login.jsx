@@ -224,10 +224,10 @@ const Login = () => {
 
     const handleLoginSuccess = async (response) => {
         try {
-            // store token(s)
+            // store token(s) - use both keys for consistency across all components
             if (response?.data?.token) {
                 localStorage.setItem('authToken', response.data.token)
-                // keep helper flags for legacy checks
+                localStorage.setItem('token', response.data.token)
                 localStorage.setItem('hasAuthToken', 'true')
                 localStorage.setItem('hasToken', 'true')
                 localStorage.setItem('isLoggedIn', 'true')
