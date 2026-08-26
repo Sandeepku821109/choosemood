@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../../utils/api'
 import React, { useState, useRef, useEffect } from 'react'
 import { backendUrl } from '../../config'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -109,38 +109,33 @@ const VerifyOtp = () => {
             if (response.status === 200) {
                 setSuccessMessage('Account verified successfully!')
                 
-                // Store all authentication data properly
+                // Store auth data — httpOnly cookie is primary; localStorage is fallback
                 if (response.data.token) {
                     localStorage.setItem('authToken', response.data.token)
                     localStorage.setItem('token', response.data.token)
                 }
                 
-                // Set all auth flags so Navbar and other components detect login
                 localStorage.setItem('isLoggedIn', 'true')
                 localStorage.setItem('hasToken', 'true')
                 localStorage.setItem('hasAuthToken', 'true')
                 
-                // Store user data if provided
                 if (response.data.user) {
                     const user = response.data.user
                     const userId = user.id || user._id || btoa(email).replace(/[^a-zA-Z0-9]/g, '')
                     localStorage.setItem('userId', userId)
                     localStorage.setItem('userEmail', email)
+                    if (user.name) localStorage.setItem('userName', user.name)
                 } else {
                     const fallbackUserId = btoa(email).replace(/[^a-zA-Z0-9]/g, '')
                     localStorage.setItem('userId', fallbackUserId)
                     localStorage.setItem('userEmail', email)
                 }
                 
-                // Get the return URL from navigation state or default to dashboard
                 const returnUrl = location.state?.returnUrl || location.state?.from || '/'
                 
-                // Redirect after a short delay to show success message
+                // After OTP verification, collect profile data first
                 setTimeout(() => {
-                    // Full browser refresh so every component (navbar, cart,
-                    // profile...) re-reads localStorage and shows user data.
-                    // replace() = same as { replace: true }, no back-history entry
-                    window.location.replace(returnUrl)
+                    navigate('/complete-profile', { replace: true, state: { returnUrl } })
                 }, 1500)
             }
         } catch (error) {

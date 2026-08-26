@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import axios from 'axios'
+import axios from '../utils/api'
 import { backendUrl } from '../config'
 import { fetchCart } from '../store/slices/cartSlice'
 import { fetchWishlistItems } from '../store/slices/wishlistSlice'
@@ -51,25 +51,40 @@ const Navbar = () => {
   // Calculate wishlist count (number of unique items)
   const wishlistCount = wishlistItems.length
 
-  // Update the checkAuthentication function
-  const checkAuthentication = () => {
+  // Check session with backend — the httpOnly cookie is the source of truth
+  const checkAuthentication = async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/api/users/session`)
+      if (response.data?.success && response.data?.user) {
+        const user = response.data.user
+        const displayName = user.name || localStorage.getItem('userName') || user.email?.split('@')[0] || 'User'
+        setIsAuthenticated(true)
+        setUserName(displayName)
+        if (user.email) localStorage.setItem('userEmail', user.email)
+        if (user.id) localStorage.setItem('userId', user.id)
+        localStorage.setItem('isLoggedIn', 'true')
+        dispatch(fetchCart())
+        dispatch(fetchWishlistItems())
+        window.dispatchEvent(new Event('auth-change'))
+        return
+      }
+    } catch {
+      // Session invalid — fall through to localStorage check
+    }
+
+    // Fallback: check localStorage (for immediate UX before cookie round-trip)
     const authToken = localStorage.getItem('authToken')
     const token = localStorage.getItem('token')
     const userEmail = localStorage.getItem('userEmail')
-    const storedUserName = localStorage.getItem('userName')
+    const isLoggedIn = localStorage.getItem('isLoggedIn')
 
-    if (authToken || token || userEmail) {
+    if (authToken || token || isLoggedIn === 'true') {
       setIsAuthenticated(true)
-      const displayName = storedUserName || userEmail?.split('@')[0] || 'User'
-      setUserName(displayName)
-
-      // Ensure app data is refreshed when auth present
+      const storedUserName = localStorage.getItem('userName')
+      setUserName(storedUserName || userEmail?.split('@')[0] || 'User')
       dispatch(fetchCart())
       dispatch(fetchWishlistItems())
-
-      // Signal other parts of the app (Profile, Orders, etc.) to refresh
       window.dispatchEvent(new Event('auth-change'))
-      window.dispatchEvent(new Event('refresh-user-data'))
     } else {
       setIsAuthenticated(false)
       setUserName('')
@@ -121,22 +136,16 @@ const Navbar = () => {
     localStorage.removeItem('userName')
     localStorage.removeItem('userId')
     localStorage.removeItem('isLoggedIn')
-    try { sessionStorage.clear() } catch(e) {
-      console.log(e)
-    }
+    try { sessionStorage.clear() } catch(e) {}
 
     setIsAuthenticated(false)
     setUserName('')
     setIsProfileOpen(false)
 
-    dispatch(fetchCart())
-    dispatch(fetchWishlistItems())
-
     window.dispatchEvent(new Event('auth-change'))
     window.dispatchEvent(new Event('user-logged-out'))
 
-    navigate('/login')
-    setTimeout(() => window.location.reload(), 250)
+    navigate('/login', { replace: true })
   }
 
   const toggleMenu = () => {

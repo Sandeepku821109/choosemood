@@ -8,7 +8,8 @@ import {
   AlertCircle,
   Loader2,
   CreditCard,
-  Truck
+  Truck,
+  Check
 } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
@@ -19,7 +20,11 @@ import {
   updateCartQuantity,
   removeFromCart,
   clearCart,
-  clearError
+  clearError,
+  toggleItemSelection,
+  selectAllItems,
+  deselectAllItems,
+  selectSelectedItems
 } from '../../store/slices/cartSlice'
 import { handleImageError } from '../../utils/imageUtils'
 
@@ -80,6 +85,7 @@ const Cart = () => {
     shipping,
     total
   } = useSelector((state) => state.cart)
+  const selectedItems = useSelector(selectSelectedItems)
   
   // Enhanced authentication check with multiple fallbacks
   const checkAuthentication = () => {
@@ -103,6 +109,20 @@ const Cart = () => {
   }
 
   const isAuthenticated = checkAuthentication()
+
+  // Selection helpers
+  const allSelected = cartItems.length > 0 && cartItems.every(item => selectedItems.includes(item.itemId || item.productId || item.id))
+  const selectedCount = selectedItems.length
+  const selectedSubtotal = cartItems
+    .filter(item => selectedItems.includes(item.itemId || item.productId || item.id))
+    .reduce((sum, item) => {
+      const itemPrice = item.discount > 0
+        ? item.price - (item.price * item.discount / 100)
+        : item.price
+      return sum + (itemPrice * item.quantity)
+    }, 0)
+  const selectedShipping = selectedSubtotal >= 999 ? 0 : 49
+  const selectedTotal = selectedSubtotal + selectedShipping
 
   // Fetch cart on component mount if authenticated
   useEffect(() => {
@@ -257,13 +277,28 @@ const Cart = () => {
       return
     }
 
-    // Store checkout data in localStorage for the checkout page
+    if (selectedCount === 0) {
+      toast.warning('Please select at least one item to checkout', {
+        position: "bottom-right",
+        autoClose: 2500,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      })
+      return
+    }
+
+    // Store only selected items in checkout data
+    const checkoutItems = cartItems.filter(item =>
+      selectedItems.includes(item.itemId || item.productId || item.id)
+    )
     const checkoutData = {
-      items: cartItems,
-      subtotal,
-      shipping: 30, // Fixed shipping charge of ₹30
-      total: (subtotal || 0) + 30, // Total without tax
-      timestamp: Date.now() // Add timestamp to ensure data freshness
+      items: checkoutItems,
+      subtotal: selectedSubtotal,
+      shipping: selectedShipping,
+      total: selectedTotal,
+      timestamp: Date.now()
     }
     
     localStorage.setItem('checkoutData', JSON.stringify(checkoutData))
@@ -370,7 +405,7 @@ const Cart = () => {
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
             <div className="flex items-center">
               <button
                 onClick={handleContinueShopping}
@@ -381,6 +416,20 @@ const Cart = () => {
               </button>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Select All checkbox */}
+              <label className="flex items-center space-x-2 cursor-pointer select-none">
+                <div
+                  onClick={() => allSelected ? dispatch(deselectAllItems()) : dispatch(selectAllItems())}
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                    allSelected ? 'bg-[#E72744] border-[#E72744]' : 'border-gray-400 hover:border-gray-600'
+                  }`}
+                >
+                  {allSelected && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <span className="text-sm text-gray-600">
+                  {allSelected ? 'Deselect All' : 'Select All'}
+                </span>
+              </label>
               <span className="text-gray-600">{totalItems} item{totalItems !== 1 ? 's' : ''}</span>
               <button 
                 onClick={handleClearCart} 
@@ -401,8 +450,26 @@ const Cart = () => {
             {cartItems.map((item) => (
               <div
                 key={item.itemId || item.productId}
-                className="flex flex-col sm:flex-row items-start sm:items-center bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 gap-4"
+                className={`flex flex-col sm:flex-row items-start sm:items-center bg-white p-4 sm:p-6 rounded-lg shadow-sm border gap-4 transition-colors ${
+                  selectedItems.includes(item.itemId || item.productId || item.id)
+                    ? 'border-[#E72744]/30 bg-red-50/30'
+                    : 'border-gray-200'
+                }`}
               >
+                {/* Selection Checkbox */}
+                <div
+                  onClick={() => dispatch(toggleItemSelection(item.itemId || item.productId || item.id))}
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer flex-shrink-0 transition-colors ${
+                    selectedItems.includes(item.itemId || item.productId || item.id)
+                      ? 'bg-[#E72744] border-[#E72744]'
+                      : 'border-gray-400 hover:border-gray-600'
+                  }`}
+                >
+                  {selectedItems.includes(item.itemId || item.productId || item.id) && (
+                    <Check className="w-3 h-3 text-white" />
+                  )}
+                </div>
+
                 {/* Product Image */}
                 <div className="w-full sm:w-24 h-48 sm:h-24 flex-shrink-0">
                   <img
@@ -508,32 +575,52 @@ const Cart = () => {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6 sticky top-24">
               <h2 className="text-xl font-semibold text-gray-900">Order Summary</h2>
               
+              {selectedCount > 0 && (
+                <p className="text-sm text-gray-500">{selectedCount} item{selectedCount !== 1 ? 's' : ''} selected</p>
+              )}
+
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">₹{(subtotal || 0).toFixed(2)}</span>
+                  <span className="font-medium">₹{(selectedSubtotal || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium">₹30.00</span>
+                  {selectedShipping === 0 ? (
+                    <span className="font-medium text-green-600">FREE</span>
+                  ) : (
+                    <span className="font-medium">₹{selectedShipping.toFixed(2)}</span>
+                  )}
                 </div>
+
+                {selectedSubtotal > 0 && selectedSubtotal < 999 && (
+                  <p className="text-xs text-gray-500">
+                    Add ₹{(999 - selectedSubtotal).toFixed(2)} more for free shipping
+                  </p>
+                )}
                 
                 <div className="border-t border-gray-200 pt-3 flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>₹{((subtotal || 0) + 30).toFixed(2)}</span>
+                  <span>₹{(selectedTotal || 0).toFixed(2)}</span>
                 </div>
               </div>
 
               <button
                 onClick={handleProceedToCheckout}
-                className="w-full bg-[#E72744] text-white py-3 rounded-lg hover:bg-[#C81E38] transition-colors font-medium"
+                disabled={selectedCount === 0}
+                className="w-full bg-[#E72744] text-white py-3 rounded-lg hover:bg-[#C81E38] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
+                <CreditCard className="w-5 h-5" />
                 Proceed to Checkout
               </button>
+
+              {selectedCount === 0 && cartItems.length > 0 && (
+                <p className="text-xs text-center text-gray-500">Select items above to checkout</p>
+              )}
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../../utils/api'
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { backendUrl } from '../../config'
@@ -50,38 +50,51 @@ const Login = () => {
 
     const checkAuthentication = async () => {
         try {
+            // First try session check with the httpOnly cookie
+            const response = await axios.get(`${backendUrl}/api/users/session`)
+            if (response.data?.success && response.data?.user) {
+                const user = response.data.user
+                localStorage.setItem('isLoggedIn', 'true')
+                if (user.id) localStorage.setItem('userId', user.id)
+                if (user.email) localStorage.setItem('userEmail', user.email)
+                normalizeLocalStorageFlags()
+
+                setIsAuthenticated(true)
+                setUserData({
+                    name: user.name || 'User',
+                    email: user.email || '',
+                    phone: '',
+                    profilePicture: '',
+                    joinDate: new Date().toISOString(),
+                    isVerified: user.isVerified,
+                    userId: user.id
+                })
+                return
+            }
+        } catch {
+            // Session invalid — fall through to localStorage check
+        }
+
+        // Fallback: check localStorage
+        try {
             const authToken = localStorage.getItem('authToken')
             const token = localStorage.getItem('token')
+            const isLoggedIn = localStorage.getItem('isLoggedIn')
             const userId = localStorage.getItem('userId')
             const userEmail = localStorage.getItem('userEmail')
 
-            console.log('🔐 Checking authentication:', {
-                hasAuthToken: !!authToken,
-                hasToken: !!token,
-                hasUserId: !!userId,
-                hasUserEmail: !!userEmail
-            })
-
-            // Only consider user authenticated if we have a token
-            if (authToken || token) {
+            if (authToken || token || isLoggedIn === 'true') {
                 setIsAuthenticated(true)
-                // If we don't have user data or userId, fetch it
-                if (!userId || !userData) {
-                    await fetchUserData()
-                } else {
-                    // Use existing data but still verify it's valid
-                    setUserData({
-                        name: 'User',
-                        email: userEmail || email,
-                        phone: '',
-                        profilePicture: '',
-                        joinDate: new Date().toISOString(),
-                        isVerified: true,
-                        userId: userId
-                    })
-                }
+                setUserData({
+                    name: 'User',
+                    email: userEmail || email,
+                    phone: '',
+                    profilePicture: '',
+                    joinDate: new Date().toISOString(),
+                    isVerified: true,
+                    userId: userId
+                })
             } else {
-                // No valid token found, user needs to login
                 setIsAuthenticated(false)
                 setUserData(null)
             }
@@ -89,66 +102,31 @@ const Login = () => {
             console.error('Authentication check failed:', error)
             setIsAuthenticated(false)
             setUserData(null)
-            // Clear potentially corrupted data
-            localStorage.removeItem('authToken')
-            localStorage.removeItem('token')
-            localStorage.removeItem('userId')
         } finally {
             setUserLoading(false)
         }
     }
 
-    const getAuthHeaders = () => {
-        const authToken = localStorage.getItem('authToken')
-        const token = localStorage.getItem('token')
-        const userEmail = localStorage.getItem('userEmail')
-
-        const headers = {
-            'Content-Type': 'application/json'
-        }
-        
-        if (authToken) {
-            headers.Authorization = `Bearer ${authToken}`
-        } else if (token) {
-            headers.Authorization = `Bearer ${token}`
-        }
-        
-        if (userEmail) {
-            headers['User-Email'] = userEmail
-        }
-        
-        return headers
-    }
-
     const fetchUserData = async () => {
         try {
-            const headers = getAuthHeaders()
-            console.log('📡 Fetching user data with headers:', headers)
+            // Session check via httpOnly cookie (withCredentials is global)
+            const response = await axios.get(`${backendUrl}/api/users/session`)
+            const user = response.data?.user || response.data
             
-            const response = await axios.get(`${backendUrl}/api/users/profile`, { headers })
-            const user = response.data.data || response.data.user || response.data
-            
-            console.log('👤 User data received:', user)
-            
-            // Store user ID in localStorage for future use
             const userId = user.id || user._id || user.userId
             if (userId) {
                 localStorage.setItem('userId', userId)
-                localStorage.setItem('isLoggedIn', 'true') // flag
-            } else {
-                const tempId = user.email ? btoa(user.email).replace(/[^a-zA-Z0-9]/g, '') : Date.now().toString()
-                localStorage.setItem('userId', tempId)
                 localStorage.setItem('isLoggedIn', 'true')
             }
-            // ensure flags are normalized after storing user info
+            if (user.email) localStorage.setItem('userEmail', user.email)
             normalizeLocalStorageFlags()
             
             setUserData({
-                name: user.name || user.fullName || user.userName || 'User',
+                name: user.name || 'User',
                 email: user.email || localStorage.getItem('userEmail') || '',
-                phone: user.phone || user.phoneNumber || user.mobile || '',
-                profilePicture: user.profilePicture || user.avatar || '',
-                joinDate: user.createdAt || user.joinDate || new Date().toISOString(),
+                phone: user.phoneNumber || '',
+                profilePicture: user.profilePicture || '',
+                joinDate: new Date().toISOString(),
                 isVerified: user.isVerified !== undefined ? user.isVerified : true,
                 userId: userId
             })
@@ -156,11 +134,9 @@ const Login = () => {
         } catch (error) {
             console.error('Error fetching user data:', error)
             
-            // If we can't fetch user data but have a token, create fallback data
             const storedEmail = localStorage.getItem('userEmail') || email
             const fallbackUserId = localStorage.getItem('userId') || btoa(storedEmail || 'user').replace(/[^a-zA-Z0-9]/g, '') || Date.now().toString()
             
-            // Store the fallback userId
             localStorage.setItem('userId', fallbackUserId)
             localStorage.setItem('isLoggedIn', 'true')
             normalizeLocalStorageFlags()
@@ -224,7 +200,7 @@ const Login = () => {
 
     const handleLoginSuccess = async (response) => {
         try {
-            // store token(s) - use both keys for consistency across all components
+            // store token(s) — these are fallback; the httpOnly cookie is primary
             if (response?.data?.token) {
                 localStorage.setItem('authToken', response.data.token)
                 localStorage.setItem('token', response.data.token)
@@ -232,24 +208,20 @@ const Login = () => {
                 localStorage.setItem('hasToken', 'true')
                 localStorage.setItem('isLoggedIn', 'true')
             }
-            if (response?.data?.name) {
-                localStorage.setItem('userName', response.data.name || (response.data.email || '').split('@')[0])
-            }
             if (response?.data?.user) {
-                const uid = response.data.user._id || response.data.user.id || null
+                const user = response.data.user
+                const uid = user.id || user._id || null
                 if (uid) localStorage.setItem('userId', uid)
+                if (user.email) localStorage.setItem('userEmail', user.email)
+                if (user.name) localStorage.setItem('userName', user.name)
             }
 
             // Notify app to refresh authenticated data
             window.dispatchEvent(new Event('auth-change'))
             window.dispatchEvent(new Event('username-updated'))
-            window.dispatchEvent(new Event('refresh-user-data'))
 
-            // Ensure Navbar (and other listeners) fetch refreshed data
-            // small navigation/reload
             const returnUrl = location.state?.returnUrl || '/'
-            navigate(returnUrl)
-            setTimeout(() => window.location.reload(), 300)
+            navigate(returnUrl, { replace: true })
         } catch (error) {
             console.error('Login error:', error)
         }

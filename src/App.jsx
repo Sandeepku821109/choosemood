@@ -9,6 +9,7 @@ import BrandLoader from './components/common/BrandLoader'
 
 const Signup = lazy(() => import('./components/auth/Signup'))
 const VerifyOtp = lazy(() => import('./components/auth/VerifyOtp'))
+const CompleteProfile = lazy(() => import('./components/auth/CompleteProfile'))
 const Login = lazy(() => import('./components/auth/Login'))
 const Profile = lazy(() => import('./components/auth/Profile'))
 const Collection = lazy(() => import('./components/pages/Collection'))
@@ -53,6 +54,7 @@ const App = () => {
           <Route path='/signup' element={<Signup />} />
           <Route path='/login' element={<Login />} />
           <Route path='/verifyOtp' element={<VerifyOtp />} />
+          <Route path='/complete-profile' element={<CompleteProfile />} />
           <Route path='/collections' element={<Collection />} />
           <Route path='/products/:id' element={<ProductDetails />} />
           <Route path='/contact' element={<Contact />} />

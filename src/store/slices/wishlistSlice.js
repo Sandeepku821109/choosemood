@@ -32,19 +32,8 @@ const getLocalBoolean = (key) => {
 // ensure flags exist at module load
 normalizeLocalStorageFlags()
 
-// Helper functions
-const getAuthHeaders = () => {
-  const authToken = localStorage.getItem('authToken')
-  const token = localStorage.getItem('token')
-  const userEmail = localStorage.getItem('userEmail')
-  const headers = { 'Content-Type': 'application/json' }
-  if (authToken) headers.Authorization = `Bearer ${authToken}`
-  else if (token) headers.Authorization = `Bearer ${token}`
-  if (userEmail) headers['User-Email'] = userEmail
-  return headers
-}
-const getAuthToken = () => localStorage.getItem('authToken') || localStorage.getItem('token')
-const getUserId = () => localStorage.getItem('userId') || localStorage.getItem('userEmail') || null
+// Auth is handled by httpOnly cookie (withCredentials=true on all axios requests).
+const getHeaders = () => ({ 'Content-Type': 'application/json' })
 
 // Robust image resolver
 const NO_IMAGE_FALLBACK =
@@ -80,9 +69,7 @@ export const fetchWishlistItems = createAsyncThunk(
   'wishlist/fetchItems',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('authToken')
-      if (!token) return rejectWithValue('Please login to view wishlist')
-      const headers = getAuthHeaders()
+      const headers = getHeaders()
       const response = await axios.get(`${backendUrl}/api/wishlist`, { headers })
       const items = response.data.data?.items || response.data.items || response.data.data || response.data || []
       return items.map(item => ({
@@ -107,8 +94,6 @@ export const addToWishlist = createAsyncThunk(
   'wishlist/addToWishlist',
   async (productData, { rejectWithValue }) => {
     try {
-      const token = getAuthToken()
-      if (!token) return rejectWithValue('No authentication token found. Please log in again.')
       if (!productData || !productData.productId) return rejectWithValue('Product ID is required')
       const wishlistData = {
         productId: productData.productId,
@@ -126,10 +111,8 @@ export const addToWishlist = createAsyncThunk(
         ...(productData.category && { category: productData.category }),
         ...(productData.brand && { brand: productData.brand }),
       }
-      const userId = getUserId()
-      if (userId) wishlistData.userId = userId
       const response = await axios.post(`${backendUrl}/api/wishlist/add`, wishlistData, {
-        headers: getAuthHeaders(),
+        headers: getHeaders(),
         timeout: 15000
       })
       if (response.data && response.data.success !== false) {
@@ -160,17 +143,15 @@ export const addToWishlist = createAsyncThunk(
 
 export const removeFromWishlist = createAsyncThunk(
   'wishlist/removeFromWishlist',
-  async (productId, { rejectWithValue, getState }) => {
+  async (productId, { rejectWithValue }) => {
     try {
-      const token = getAuthToken()
-      if (!token) return rejectWithValue('No authentication token found. Please log in again.')
       let targetId = productId
       if (typeof productId === 'object' && productId !== null) {
         targetId = productId.productId || productId.id || productId._id
       }
       if (!targetId) return rejectWithValue('Product ID is required')
       await axios.delete(`${backendUrl}/api/wishlist/remove/${targetId}`, {
-        headers: getAuthHeaders(),
+        headers: getHeaders(),
         timeout: 15000
       })
       return { productId: String(targetId), removedId: String(targetId) }
@@ -195,8 +176,7 @@ export const clearWishlist = createAsyncThunk(
   'wishlist/clearAll',
   async (_, { rejectWithValue }) => {
     try {
-      const headers = getAuthHeaders()
-      await axios.delete(`${backendUrl}/api/wishlist/clear`, { headers })
+      await axios.delete(`${backendUrl}/api/wishlist/clear`, { headers: getHeaders() })
       return true
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message)

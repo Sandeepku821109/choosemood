@@ -7,19 +7,11 @@ const getUserId = () => {
   return localStorage.getItem('userId')
 }
 
-// Helper function to get auth token
-const getAuthToken = () => {
-  return localStorage.getItem('authToken') || localStorage.getItem('token')
-}
-
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = getAuthToken()
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  }
-}
+// Auth is handled by httpOnly cookie (withCredentials=true on all axios requests).
+// We keep a minimal header helper only for endpoints that explicitly need it.
+const getHeaders = () => ({
+  'Content-Type': 'application/json'
+})
 
 // Centralized image processing function
 const processProductImage = (item, productData = null) => {
@@ -96,13 +88,8 @@ export const fetchCart = createAsyncThunk(
   'cart/fetchCart',
   async (_, { rejectWithValue }) => {
     try {
-      const token = getAuthToken()
-      if (!token) {
-        return rejectWithValue('No authentication token found. Please log in again.')
-      }
-
       const response = await axios.get(`${backendUrl}/api/cart`, {
-        headers: getAuthHeaders(),
+        headers: getHeaders(),
         timeout: 10000
       })
 
@@ -146,17 +133,11 @@ export const addToCart = createAsyncThunk(
   'cart/addToCart',
   async (cartItemData, { rejectWithValue, dispatch }) => {
     try {
-      const token = getAuthToken()
-      if (!token) {
-        return rejectWithValue('You must be logged in to add items to your cart.')
-      }
-
       // normalize payload expected by backend
       const payload = {
         productId: cartItemData?.productId || cartItemData?.product || cartItemData?.product_id || cartItemData?.id,
         size: cartItemData?.size ?? cartItemData?.selectedSize ?? null,
         quantity: Number(cartItemData?.quantity ?? 1),
-        // include optional fields if provided
         ...(cartItemData?.price && { price: cartItemData.price }),
         ...(cartItemData?.name && { name: cartItemData.name }),
         ...(cartItemData?.color && { color: cartItemData.color })
@@ -167,7 +148,7 @@ export const addToCart = createAsyncThunk(
       }
 
       const response = await axios.post(`${backendUrl}/api/cart/add`, payload, {
-        headers: getAuthHeaders()
+        headers: getHeaders()
       })
 
       // Re-fetch cart to ensure data consistency after adding an item
@@ -190,13 +171,7 @@ export const updateCartQuantity = createAsyncThunk(
   'cart/updateQuantity',
   async ({ itemId, productId, quantity }, { rejectWithValue, dispatch }) => {
     try {
-      const token = getAuthToken()
       const userId = getUserId()
-      
-      if (!token) {
-        return rejectWithValue('No authentication token found. Please log in again.')
-      }
-
       const updateId = itemId || productId
       
       const updateData = {
@@ -206,7 +181,7 @@ export const updateCartQuantity = createAsyncThunk(
       }
 
       const response = await axios.put(`${backendUrl}/api/cart/update/${updateId}`, updateData, {
-        headers: getAuthHeaders()
+        headers: getHeaders()
       })
 
       // Re-fetch cart to ensure data consistency
@@ -227,13 +202,7 @@ export const removeFromCart = createAsyncThunk(
   'cart/removeFromCart',
   async ({ itemId, productId }, { rejectWithValue, dispatch }) => {
     try {
-      const token = getAuthToken()
       const userId = getUserId()
-      
-      if (!token) {
-        return rejectWithValue('No authentication token found. Please log in again.')
-      }
-
       const removeId = itemId || productId
 
       if (!removeId) {
@@ -241,7 +210,7 @@ export const removeFromCart = createAsyncThunk(
       }
 
       const response = await axios.delete(`${backendUrl}/api/cart/remove/${removeId}`, {
-        headers: getAuthHeaders(),
+        headers: getHeaders(),
         data: { 
           userId: userId, 
           itemId: removeId 
@@ -270,14 +239,8 @@ export const clearCart = createAsyncThunk(
   'cart/clearCart',
   async (_, { rejectWithValue }) => {
     try {
-      const token = getAuthToken()
-      
-      if (!token) {
-        return rejectWithValue('No authentication token found. Please log in again.')
-      }
-
       const response = await axios.delete(`${backendUrl}/api/cart/clear`, {
-        headers: getAuthHeaders()
+        headers: getHeaders()
       })
 
       return response.data
@@ -291,8 +254,12 @@ export const clearCart = createAsyncThunk(
   }
 )
 
+const SHIPPING_RATE = 49 // ₹49 shipping
+const FREE_SHIPPING_THRESHOLD = 999 // Free shipping above ₹999
+
 const initialState = {
   items: [],
+  selectedItems: [], // array of itemIds that are checked for checkout
   loading: false,
   error: null,
   updating: {},
@@ -322,8 +289,25 @@ const cartSlice = createSlice({
           : item.price
         return sum + (itemPrice * item.quantity)
       }, 0)
-      state.shipping = state.subtotal > 100 ? 0 : 10
+      state.shipping = state.subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_RATE
       state.total = state.subtotal + state.shipping
+    },
+
+    // --- Selection reducers (cart checkboxes) ---
+    toggleItemSelection: (state, action) => {
+      const itemId = action.payload
+      const idx = state.selectedItems.indexOf(itemId)
+      if (idx >= 0) {
+        state.selectedItems.splice(idx, 1)
+      } else {
+        state.selectedItems.push(itemId)
+      }
+    },
+    selectAllItems: (state) => {
+      state.selectedItems = state.items.map(item => item.itemId || item.productId || item.id)
+    },
+    deselectAllItems: (state) => {
+      state.selectedItems = []
     },
     // Add local cart management for non-authenticated users
     addToLocalCart: (state, action) => {
@@ -385,6 +369,7 @@ const cartSlice = createSlice({
     },
     clearLocalCart: (state) => {
       state.items = []
+      state.selectedItems = []
       state.updating = {}
       cartSlice.caseReducers.calculateTotals(state)
       localStorage.removeItem('localCart')
@@ -400,6 +385,7 @@ const cartSlice = createSlice({
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false
         state.items = action.payload
+        state.selectedItems = action.payload.map(item => item.itemId || item.productId || item.id)
         state.lastFetch = Date.now()
         cartSlice.caseReducers.calculateTotals(state)
       })
@@ -468,6 +454,9 @@ const cartSlice = createSlice({
             (productId && (item.productId === productId || item.id === productId))
           )
         })
+
+        // Remove from selectedItems if it was selected
+        state.selectedItems = state.selectedItems.filter(sid => sid !== id && sid !== itemId && sid !== productId)
         
         cartSlice.caseReducers.calculateTotals(state)
       })
@@ -486,6 +475,7 @@ const cartSlice = createSlice({
       .addCase(clearCart.fulfilled, (state) => {
         state.loading = false
         state.items = []
+        state.selectedItems = []
         state.updating = {}
         cartSlice.caseReducers.calculateTotals(state)
       })
@@ -496,7 +486,7 @@ const cartSlice = createSlice({
   }
 })
 
-export const { clearError, setUpdating, calculateTotals, addToLocalCart, removeFromLocalCart, updateLocalCartQuantity, loadLocalCart, clearLocalCart } = cartSlice.actions
+export const { clearError, setUpdating, calculateTotals, toggleItemSelection, selectAllItems, deselectAllItems, addToLocalCart, removeFromLocalCart, updateLocalCartQuantity, loadLocalCart, clearLocalCart } = cartSlice.actions
 
 // Add these memoized selectors after the cartSlice definition
 export const selectCartItems = (state) => state.cart.items
@@ -516,6 +506,37 @@ export const selectCartItemsCount = createSelector(
   (items) => items.reduce((sum, item) => sum + item.quantity, 0)
 )
 
+// Selection-related selectors
+export const selectSelectedItems = (state) => state.cart.selectedItems
+
+export const selectSelectedCartItems = createSelector(
+  [selectCartItems, selectSelectedItems],
+  (items, selected) => items.filter(item => selected.includes(item.itemId || item.productId || item.id))
+)
+
+export const selectSelectedCount = createSelector(
+  [selectSelectedItems],
+  (selected) => selected.length
+)
+
+export const selectSelectedSubtotal = createSelector(
+  [selectSelectedCartItems],
+  (items) => items.reduce((sum, item) => {
+    const itemPrice = item.discount > 0 
+      ? item.price - (item.price * item.discount / 100)
+      : item.price
+    return sum + (itemPrice * item.quantity)
+  }, 0)
+)
+
+export const selectSelectedTotal = createSelector(
+  [selectSelectedSubtotal],
+  (subtotal) => {
+    const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_RATE
+    return subtotal + shipping
+  }
+)
+
 export const selectCartSubtotal = createSelector(
   [selectCartItems],
   (items) => items.reduce((sum, item) => {
@@ -529,9 +550,8 @@ export const selectCartSubtotal = createSelector(
 export const selectCartTotal = createSelector(
   [selectCartSubtotal],
   (subtotal) => {
-    const shipping = subtotal > 100 ? 0 : 10
-    const tax = subtotal * 0.08
-    return subtotal + shipping + tax
+    const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_RATE
+    return subtotal + shipping
   }
 )
 
