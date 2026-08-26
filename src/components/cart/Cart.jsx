@@ -108,8 +108,6 @@ const Cart = () => {
     )
   }
 
-  const isAuthenticated = checkAuthentication()
-
   // Selection helpers
   const allSelected = cartItems.length > 0 && cartItems.every(item => selectedItems.includes(item.itemId || item.productId || item.id))
   const selectedCount = selectedItems.length
