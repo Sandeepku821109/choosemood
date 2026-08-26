@@ -9,6 +9,10 @@ export default defineConfig({
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx']
   },
+  define: {
+    'import.meta.env.VITE_BACKEND_URL': JSON.stringify(process.env.BACKEND_URL || ''),
+    'import.meta.env.VITE_RAZORPAY_KEY_ID': JSON.stringify(process.env.RAZORPAY_KEY_ID || ''),
+  },
   server: {
     port: 5173,
     host: true
