@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
+import config from '../../config'
+
 const SmilarProduct = ({ productCode, subcategory, excludeId = null, limit = 10 }) => {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || ''
-  const cloudBase = import.meta.env.VITE_CLOUDINARY_BASE || (cloudName ? `https://res.cloudinary.com/${cloudName}/image/upload` : '')
+  const baseUrl = config.backendUrl
+  const cloudBase = config.cloudinaryBase
   const navigate = useNavigate()
 
   const placeholder =

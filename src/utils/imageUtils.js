@@ -1,4 +1,6 @@
 ﻿
+import config from '../config'
+
 const makePlaceholder = (width = 300, height = 200, text = 'No Image') =>
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
@@ -95,7 +97,7 @@ export const processImageUrl = (imageUrl, fallbackText = 'Image') => {
   }
   
   // If it's a relative path, construct the full URL
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+  const backendUrl = config.backendUrl
   return `${backendUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
 }
 

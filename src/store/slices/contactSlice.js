@@ -2,8 +2,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Add this line to import backendUrl
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+import config from '../../config'
+
+const backendUrl = config.backendUrl
 
 const initialState = {
     messages: [],

@@ -3,7 +3,9 @@ import Products from '../products/Products'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+import config from '../../config'
+
+const backendUrl = config.backendUrl
 
 const RelatedProduct = ({ category, subcategory }) => {
   const [related, setRelated] = useState([])

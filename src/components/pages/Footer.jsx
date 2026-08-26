@@ -1,4 +1,5 @@
 import React from 'react'
+import config from '../../config'
 import {
   Facebook,
   Twitter,
@@ -13,7 +14,7 @@ import {
 } from 'lucide-react'
 
 const Footer = () => {
-  const companyName = import.meta.env.VITE_COMPANY_NAME || 'FlyStore'
+  const companyName = config.companyName
 
   const socialLinks = [
     { name: 'Facebook', url: 'https://www.facebook.com/profile.php?id=61582363674558', Icon: Facebook },

@@ -1,5 +1,6 @@
 
 import { backendUrl } from '../config'
+import config from '../config'
 import axios from 'axios'
 
 // Helper function to get auth headers and user info
@@ -520,7 +521,7 @@ export const initializeRazorpayPayment = async (orderDetails, userDetails, onSuc
     console.log('✅ Razorpay order created:', razorpayOrderData)
     
     // Step 5: Validate Razorpay key
-    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID
+    const razorpayKey = config.razorpayKeyId
     if (!razorpayKey) {
       throw new Error('Razorpay key not configured. Please check VITE_RAZORPAY_KEY_ID in environment variables.')
     }

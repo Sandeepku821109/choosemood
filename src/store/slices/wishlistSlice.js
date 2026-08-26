@@ -2,7 +2,9 @@ import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit'
 import axios from 'axios'
 import { processImageUrl } from '../../utils/imageUtils'
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+import config from '../../config'
+
+const backendUrl = config.backendUrl
 
 // normalize presence flags in localStorage so other modules can check booleans reliably
 const normalizeLocalStorageFlags = () => {

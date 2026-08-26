@@ -1,6 +1,7 @@
 import axios from 'axios'
 import React, { useState, useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import config from '../../config'
 import { addToWishlist, removeFromWishlist } from '../../store/slices/wishlistSlice'
 import { addToCart } from '../../store/slices/cartSlice'
 import { fetchAddress } from '../../store/slices/addressSlice'
@@ -23,7 +24,7 @@ import {
 import RelatedProduct from '../relatedProudct/RelatedProduct'
 import SmilarProduct from './SmilarProduct'
 
-const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+const baseUrl = config.backendUrl
 
 const PLACEHOLDER_IMG =
   'data:image/svg+xml;utf8,' +
